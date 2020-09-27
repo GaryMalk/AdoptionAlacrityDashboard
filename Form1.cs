@@ -1,13 +1,11 @@
 ﻿using SharpLearning.Containers.Matrices;
 using SharpLearning.Neural.Models;
 using System;
-using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using System.Drawing;
 using System.IO;
 using System.IO.Compression;
-using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Windows.Forms.DataVisualization.Charting;
@@ -16,7 +14,11 @@ namespace AdoptionAlacrityDashboard
 {
     public partial class Form1 : Form
     {
-        List<string> models = new string[] { "adoptModel_white.xml" }.ToList();
+        string[] models = new string[] { "adoptModel_black.xml", "adoptModel_hispanic.xml", "adoptModel_nativeAmerican.xml", "adoptModel_white.xml" };
+        decimal whitePercent;
+        decimal blackPercent;
+        decimal hispanicPercent;
+        decimal nativeAmericanPercent;
 
         public Form1()
         {
@@ -28,6 +30,7 @@ namespace AdoptionAlacrityDashboard
                 FileInfo fileInfo = new FileInfo(model);
                 if (!fileInfo.Exists)
                 {
+                    Logger.Log.WriteLog($"unzipping {model}");
                     ZipFile.ExtractToDirectory(model.Replace(".xml",".zip"), ".");
                 }
             }
@@ -253,6 +256,26 @@ namespace AdoptionAlacrityDashboard
         {
             selectedRaceLabel.Text = raceModelComboBox.Text + ":";
             otherRacesLabel.Text = $"% / Non-{selectedRaceLabel.Text} {Math.Round(100 - raceUpDown.Value,2)}%";
+
+            // if data has been loaded from the state, the racial percentages have been cached
+            if (!string.IsNullOrWhiteSpace(stateLoadComboBox.Text))
+            {
+                switch(raceModelComboBox.Text)
+                {
+                    case "Black":
+                        raceUpDown.Value = blackPercent;
+                        break;
+                    case "Hispanic":
+                        raceUpDown.Value = hispanicPercent;
+                        break;
+                    case "Native American":
+                        raceUpDown.Value = nativeAmericanPercent;
+                        break;
+                    case "White":
+                        raceUpDown.Value = whitePercent;
+                        break;
+                }
+            }
         }
 
         private void raceUpDown_ValueChanged(object sender, EventArgs e)
@@ -320,9 +343,10 @@ namespace AdoptionAlacrityDashboard
                 predictionProgressBar.MarqueeAnimationSpeed = 30;
 
                 Logger.Log.WriteLog($"Running model prediction for {stateName}");
+                string modelFile = $"adoptModel_{raceModelComboBox.Text.Replace(" ", "")}.xml";
                 await Task.Run(() =>
                 {
-                    prediction = Predict(observations);
+                    prediction = Predict(observations, modelFile);
                 });
 
                 predictionProgressBar.Visible = false;
@@ -340,16 +364,15 @@ namespace AdoptionAlacrityDashboard
             }
         }
 
-        private double Predict(F64Matrix observations)
+        private double Predict(F64Matrix observations, string modelFile)
         {
-            var model = RegressionNeuralNetModel.Load(() => new StreamReader(@"adoptModel_white.xml"));
+            var model = RegressionNeuralNetModel.Load(() => new StreamReader(modelFile));
             return model.Predict(observations.Row(0));
         }
 
         private void stateLoadComboBox_SelectedIndexChanged(object sender, EventArgs e)
         {
             Logger.Log.WriteLog($"Loading data from {stateLoadComboBox.Text} for model");
-
             try
             {
                 SqlCommand command = new SqlCommand($"{DbConnection.Observations2016} AND StateId=@StateId", DbConnection.SqlConnection);
@@ -359,13 +382,20 @@ namespace AdoptionAlacrityDashboard
                 DataTable table = new DataTable();
                 adapter.Fill(table);
 
+                // cache the race percentages so we can swap when the racial model is selected/changed
+                blackPercent = 100.00m * Convert.ToDecimal(table.Rows[0]["Black"]);
+                hispanicPercent = 100.00m * Convert.ToDecimal(table.Rows[0]["Hispanic"]);
+                nativeAmericanPercent = 100.00m * Convert.ToDecimal(table.Rows[0]["NativeAmerican"]);
+                whitePercent = 100.00m * Convert.ToDecimal(table.Rows[0]["White"]);
+
+                raceUpDown.Value = string.IsNullOrWhiteSpace(raceModelComboBox.Text) ? whitePercent : 100.00m * Convert.ToDecimal(table.Rows[0][raceModelComboBox.Text.Replace(" ", "")]);
+
                 stateModelComboBox.SelectedItem = stateLoadComboBox.SelectedItem;
                 subsidyUpDown.Value = 100.00m * Convert.ToDecimal(table.Rows[0]["Subsidy"]);
                 marriedNumericUpDown.Value = 100.00m * Convert.ToDecimal(table.Rows[0]["Married"]);
                 maleUpDown.Value = 100.00m * Convert.ToDecimal(table.Rows[0]["Male"]);
                 ageUpDown.Value = Convert.ToDecimal(table.Rows[0]["AverageAge"]);
                 relativeUpDown.Value = 100.00m - 100.00m * Convert.ToDecimal(table.Rows[0]["NonRelative"]);
-                raceUpDown.Value = 100.00m * Convert.ToDecimal(table.Rows[0]["White"]);
                 actualTextBox.Text = table.Rows[0]["AverageMonths"].ToString();
             }
             catch (SqlException exp)
