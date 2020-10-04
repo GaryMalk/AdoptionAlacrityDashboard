@@ -8,7 +8,7 @@ namespace AdoptionAlacrityDashboard
     {
         public static Point[] GetRegressionLine(Point[] points, out double r)
         {
-            Point[] regression = new Point[2];
+            Point[] regression = new Point[3];
             double x_mean = points.Average(p => p.X);
             double y_mean = points.Average(p => p.Y);
 
@@ -26,11 +26,17 @@ namespace AdoptionAlacrityDashboard
             double m = r * (x_mean / y_mean);
 
             // use the definition of a linear equation y = mx + b
-            // combined with the fact that the line must pass through the mean to get the x intercept
+            // combined with the fact that the line must pass through the mean to get the y intercept
             double b = y_mean - m * x_mean;
 
             // add intercept to the line, all we need are two points
             regression[1] = new Point(0, b);
+
+            // get the largest value of x so the line will cross the entire chart
+            double max_x = points.Max(p => p.X);
+            double last_y = m * x_mean + b;
+            regression[2] = new Point(max_x, last_y);
+
             return regression.OrderBy(p => p.X).ToArray();
         }
     }

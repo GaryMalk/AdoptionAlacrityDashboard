@@ -6,25 +6,25 @@ namespace AdoptionAlacrityDashboard
 {
     public static class DbConnection
     {
-        public const string GenderQuery = @"SELECT * FROM [AdoptionStatistics].[dbo].[GenderRawDataView]";
+        public const string GenderQuery = @"SELECT * FROM [dbo].[GenderRawDataView]";
 
-        public const string SpecialNeedsQuery = @"SELECT * FROM [AdoptionStatistics].[dbo].[SpecialNeedsRawDataView]";
+        public const string SpecialNeedsQuery = @"SELECT * FROM [dbo].[SpecialNeedsRawDataView]";
 
-        public const string AdoptionSubsidyQuery = @"SELECT * FROM [AdoptionStatistics].[dbo].[AdoptionSubsidyRawDataView]";
+        public const string AdoptionSubsidyQuery = @"SELECT * FROM [dbo].[AdoptionSubsidyRawDataView]";
 
-        public const string PriorRelationshipQuery = @"SELECT * FROM [AdoptionStatistics].[dbo].[PriorRelationshipRawDataView]";
+        public const string PriorRelationshipQuery = @"SELECT * FROM [dbo].[PriorRelationshipRawDataView]";
 
-        public const string FamilyStructureQuery = @"SELECT * FROM [AdoptionStatistics].[dbo].[FamilyStructureRawDataView]";
+        public const string FamilyStructureQuery = @"SELECT * FROM [dbo].[FamilyStructureRawDataView]";
 
-        public const string RaceQuery = @"SELECT * FROM [AdoptionStatistics].[dbo].[RaceRawDataView]";
+        public const string RaceQuery = @"SELECT * FROM [dbo].[RaceRawDataView]";
 
-        public const string TprToAdoptQuery = @"SELECT * FROM [AdoptionStatistics].[dbo].[TprToAdoptRawDataView]";
+        public const string TprToAdoptQuery = @"SELECT * FROM [dbo].[TprToAdoptRawDataView]";
 
-        public const string FinalAgeQuery = @"SELECT * FROM [AdoptionStatistics].[dbo].[FinalAgeRawDataView]";
+        public const string FinalAgeQuery = @"SELECT * FROM [dbo].[FinalAgeRawDataView]";
 
-        public const string Observations2016 = @"SELECT * FROM [AdoptionStatistics].[dbo].[ObservationsByStateYear] WHERE [YEAR]=2016 ";
+        public const string Observations2016 = @"SELECT * FROM [dbo].[ObservationsByStateYear] WHERE [YEAR]=2016 ";
 
-        public const string RegressionQuery = @"SELECT Subsidy, AverageMonths, Year FROM [AdoptionStatistics].[dbo].[ObservationsByStateYear] ORDER BY Subsidy ASC";
+        public const string RegressionQuery = @"SELECT * FROM [dbo].[ObservationsByStateYear] ORDER BY Subsidy ASC";
 
         internal static SqlConnection SqlConnection
         {

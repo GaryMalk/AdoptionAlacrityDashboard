@@ -12,7 +12,7 @@ using System.Windows.Forms.DataVisualization.Charting;
 
 namespace AdoptionAlacrityDashboard
 {
-    public partial class Form1 : Form
+    public partial class DashboardForm : Form
     {
         string[] models = new string[] { "adoptModel_black.xml", "adoptModel_hispanic.xml", "adoptModel_nativeAmerican.xml", "adoptModel_white.xml" };
         decimal whitePercent;
@@ -20,7 +20,7 @@ namespace AdoptionAlacrityDashboard
         decimal hispanicPercent;
         decimal nativeAmericanPercent;
 
-        public Form1()
+        public DashboardForm()
         {
             Logger.Log.WriteLog("starting application");
             InitializeComponent();
@@ -31,7 +31,7 @@ namespace AdoptionAlacrityDashboard
                 if (!fileInfo.Exists)
                 {
                     Logger.Log.WriteLog($"unzipping {model}");
-                    ZipFile.ExtractToDirectory(model.Replace(".xml",".zip"), ".");
+                    ZipFile.ExtractToDirectory(model.Replace(".xml", ".zip"), ".");
                 }
             }
 
@@ -39,7 +39,7 @@ namespace AdoptionAlacrityDashboard
             stateComboBox.SelectedItem = 1;
             errorLabel.ForeColor = Color.Red;
             errorLabel.Text = "";
-            UpdateCharts();
+            UpdateStateCharts();
             Logger.Log.WriteLog("Adding Chart Titles");
             Charts.CreateTitle("Gender", genderChart);
             Charts.CreateTitle("Race", raceChart);
@@ -50,51 +50,78 @@ namespace AdoptionAlacrityDashboard
             Charts.CreateTitle("Special Needs", specialNeedsChart);
             Charts.CreateTitle("Adoption Subsidy", adoptionSubsidyChart);
 
-            try
-            {
-                Logger.Log.WriteLog("Creating Regression Chart");
-                double r = Charts.CreateRegressionChart(ref regressionChart);
-                rLabel.Text = $"Correlation Coefficient r = {Math.Round(r, 3)}";
-                string relation = "";
-
-                if (Math.Abs(r) < 0.1)
-                {
-                    relation = "No";
-                }
-                else
-                {
-                    if (Math.Abs(r) < 0.4)
-                    {
-                        relation = "Weak";
-                    }
-                    if (Math.Abs(r) < 0.7)
-                    {
-                        relation = "Moderate";
-                    }
-                    else
-                    {
-                        relation = "Strong";
-                    }
-                    if (r < 0)
-                    {
-                        relation += " Negative";
-                    }
-                }
-
-                relationLabel.Text = $"Relationship Between Independent and Dependent Variables: {relation} Correlation";
-            }
-            catch (SqlException exp)
-            {
-                MessageBox.Show("SQL Error, see log file for details. Closing.");
-                Logger.Log.WriteLog("Error retrieving regression data.  Closing.");
-                Logger.Log.WriteLog("SqlException: " + exp.Message);
-                Environment.Exit(1);
-            }
-
+            CreateRegressionChart();
             ResizeComponents();
         }
 
-        private void UpdateCharts()
+        private void CreateRegressionChart()
+        {
+            IndependentVariable independentVariable = (IndependentVariable)variableComboBox.SelectedIndex;
+            string axisTitle = string.Empty;
+            switch (independentVariable)
+            {
+                case IndependentVariable.AverageAge:
+                    axisTitle = "Average Age in Years";
+                    break;
+                case IndependentVariable.Subsidy:
+                    axisTitle = "% Receiving Adoption Subsidy";
+                    break;
+                case IndependentVariable.Black:
+                    axisTitle = "% Black or African American";
+                    break;
+                case IndependentVariable.Hispanic:
+                    axisTitle = "% Hispanic";
+                    break;
+                case IndependentVariable.NativeAmerican:
+                    axisTitle = "% Native American";
+                    break;
+                case IndependentVariable.White:
+                    axisTitle = "% White Non-Hispanic";
+                    break;
+                case IndependentVariable.NonRelative:
+                    axisTitle = "% Non Relative";
+                    break;
+                case IndependentVariable.Male:
+                    axisTitle = "% Male";
+                    break;
+                case IndependentVariable.Married:
+                    axisTitle = "% Married";
+                    break;
+            }
+
+            Logger.Log.WriteLog("Creating Regression Chart");
+            double r = Charts.CreateRegressionChart(ref regressionChart, independentVariable, axisTitle);
+            rLabel.Text = $"Correlation Coefficient r = {Math.Round(r, 3)}";
+            string relation = "";
+
+            if (Math.Abs(r) < 0.1)
+            {
+                relation = "No";
+            }
+            else
+            {
+                if (Math.Abs(r) < 0.4)
+                {
+                    relation = "Weak";
+                }
+                if (Math.Abs(r) < 0.7)
+                {
+                    relation = "Moderate";
+                }
+                else
+                {
+                    relation = "Strong";
+                }
+                if (r < 0)
+                {
+                    relation += " Negative";
+                }
+            }
+
+            relationLabel.Text = $"Relationship Between Independent and Dependent Variables: {relation} Correlation";
+        }
+
+        private void UpdateStateCharts()
         {
             int stateId = stateComboBox.SelectedIndex + 1;
             int year = year = int.Parse(yearComboBox.Text);
@@ -116,27 +143,17 @@ namespace AdoptionAlacrityDashboard
             else
             {
                 noDatalabel.Text = "";
-                int targetFontSize = (int)Math.Round(Convert.ToDouble(Width * Height) / 145000.0,0);
+                int targetFontSize = (int)Math.Round(Convert.ToDouble(Width * Height) / 145000.0, 0);
                 Logger.Log.WriteLog($"Creating Charts for {stateComboBox.Text} {yearComboBox.Text}");
 
-                try
-                {
-                    Charts.CreateChartByStateYear(ref raceChart, DbConnection.RaceQuery, SeriesChartType.Column, stateId, year, "Race");
-                    Charts.CreateChartByStateYear(ref genderChart, DbConnection.GenderQuery, SeriesChartType.Pie, stateId, year, "Gender");
-                    Charts.CreateChartByStateYear(ref finalAgeChart, DbConnection.FinalAgeQuery, SeriesChartType.StackedArea, stateId, year, "Final Age at Adoption");
-                    Charts.CreateChartByStateYear(ref priorRelationshipChart, DbConnection.PriorRelationshipQuery, SeriesChartType.Pie, stateId, year, "Prior Relationship");
-                    Charts.CreateChartByStateYear(ref tprToAdoptChart, DbConnection.TprToAdoptQuery, SeriesChartType.StackedArea, stateId, year, "Time between TPR and Adoption");
-                    Charts.CreateChartByStateYear(ref specialNeedsChart, DbConnection.SpecialNeedsQuery, SeriesChartType.Pie, stateId, year, "Special Needs");
-                    Charts.CreateChartByStateYear(ref familyStructureChart, DbConnection.FamilyStructureQuery, SeriesChartType.Pie, stateId, year, "Adopting Family Structure");
-                    Charts.CreateChartByStateYear(ref adoptionSubsidyChart, DbConnection.AdoptionSubsidyQuery, SeriesChartType.Pie, stateId, year, "Adoption Subsidy");
-                }
-                catch (SqlException exp)
-                {
-                    MessageBox.Show("SQL Error, see log file for details, closing");
-                    Logger.Log.WriteLog("Error executing CreateChartByStateYear.  Closing.");
-                    Logger.Log.WriteLog("SqlException: " + exp.Message);
-                    Environment.Exit(1);
-                }
+                Charts.CreateChartByStateYear(ref raceChart, DbConnection.RaceQuery, SeriesChartType.Column, stateId, year, "Race");
+                Charts.CreateChartByStateYear(ref genderChart, DbConnection.GenderQuery, SeriesChartType.Pie, stateId, year, "Gender");
+                Charts.CreateChartByStateYear(ref finalAgeChart, DbConnection.FinalAgeQuery, SeriesChartType.StackedArea, stateId, year, "Final Age at Adoption");
+                Charts.CreateChartByStateYear(ref priorRelationshipChart, DbConnection.PriorRelationshipQuery, SeriesChartType.Pie, stateId, year, "Prior Relationship");
+                Charts.CreateChartByStateYear(ref tprToAdoptChart, DbConnection.TprToAdoptQuery, SeriesChartType.StackedArea, stateId, year, "Time between TPR and Adoption");
+                Charts.CreateChartByStateYear(ref specialNeedsChart, DbConnection.SpecialNeedsQuery, SeriesChartType.Pie, stateId, year, "Special Needs");
+                Charts.CreateChartByStateYear(ref familyStructureChart, DbConnection.FamilyStructureQuery, SeriesChartType.Pie, stateId, year, "Adopting Family Structure");
+                Charts.CreateChartByStateYear(ref adoptionSubsidyChart, DbConnection.AdoptionSubsidyQuery, SeriesChartType.Pie, stateId, year, "Adoption Subsidy");
 
                 raceChart.Visible = true;
                 genderChart.Visible = true;
@@ -221,6 +238,9 @@ namespace AdoptionAlacrityDashboard
                 control.Left = control.Left + moveControl;
             }
 
+            variableLabel.Left = regressionChart.Left + 100;
+            variableComboBox.Left = variableLabel.Right + 15;
+
             // resize tab 3
             // need to set the initial center of tab 3 controls
             int tab3ContrlsCenter = (loadLabel.Left + moLabel1.Right) / 2;
@@ -239,12 +259,12 @@ namespace AdoptionAlacrityDashboard
 
         private void stateComboBox_SelectedIndexChanged(object sender, EventArgs e)
         {
-            UpdateCharts();
+            UpdateStateCharts();
         }
 
         private void yearComboBox_SelectedIndexChanged(object sender, EventArgs e)
         {
-            UpdateCharts();
+            UpdateStateCharts();
         }
 
         private void Form1_Resize(object sender, EventArgs e)
@@ -405,6 +425,11 @@ namespace AdoptionAlacrityDashboard
                 Logger.Log.WriteLog("SqlException: " + exp.Message);
                 Environment.Exit(1);
             }
+        }
+
+        private void variableComboBox_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            CreateRegressionChart();
         }
     }
 }
