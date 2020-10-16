@@ -6,21 +6,21 @@ namespace AdoptionAlacrityDashboard
 {
     public static class DbConnection
     {
-        public const string GenderQuery = @"SELECT * FROM [dbo].[GenderRawDataView]";
+        public const string GenderQuery = @"SELECT * FROM [dbo].[GenderCountView]";
 
-        public const string SpecialNeedsQuery = @"SELECT * FROM [dbo].[SpecialNeedsRawDataView]";
+        public const string SpecialNeedsQuery = @"SELECT * FROM [dbo].[SpecialNeedsCountView]";
 
-        public const string AdoptionSubsidyQuery = @"SELECT * FROM [dbo].[AdoptionSubsidyRawDataView]";
+        public const string AdoptionSubsidyQuery = @"SELECT * FROM [dbo].[AdoptionSubsidyCountView]";
 
-        public const string PriorRelationshipQuery = @"SELECT * FROM [dbo].[PriorRelationshipRawDataView]";
+        public const string PriorRelationshipQuery = @"SELECT * FROM [dbo].[PriorRelationshipCountView]";
 
-        public const string FamilyStructureQuery = @"SELECT * FROM [dbo].[FamilyStructureRawDataView]";
+        public const string FamilyStructureQuery = @"SELECT * FROM [dbo].[FamilyStructureCountView]";
 
-        public const string RaceQuery = @"SELECT * FROM [dbo].[RaceRawDataView]";
+        public const string RaceQuery = @"SELECT * FROM [dbo].[RaceCountView]";
 
-        public const string TprToAdoptQuery = @"SELECT * FROM [dbo].[TprToAdoptRawDataView]";
+        public const string TprToAdoptQuery = @"SELECT * FROM [dbo].[TprToAdoptCountView]";
 
-        public const string FinalAgeQuery = @"SELECT * FROM [dbo].[FinalAgeRawDataView]";
+        public const string FinalAgeQuery = @"SELECT * FROM [dbo].[FinalAgeCountView]";
 
         public const string Observations2016 = @"SELECT * FROM [dbo].[ObservationsByStateYear] WHERE [YEAR]=2016 ";
 
