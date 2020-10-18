@@ -22,7 +22,9 @@ namespace AdoptionAlacrityDashboard
 
         public const string FinalAgeQuery = @"SELECT * FROM [dbo].[FinalAgeCountView]";
 
-        public const string Observations2016 = @"SELECT * FROM [dbo].[ObservationsByStateYear] WHERE [YEAR]=2016 ";
+        public const string YearsQuery = @"SELECT DISTINCT YEAR FROM [dbo].[ObservationsByStateYear] ORDER BY 1 DESC";
+
+        public const string Observations = @"SELECT * FROM [dbo].[ObservationsByStateYear] ";
 
         public const string RegressionQuery = @"SELECT * FROM [dbo].[ObservationsByStateYear] ORDER BY Subsidy ASC";
 

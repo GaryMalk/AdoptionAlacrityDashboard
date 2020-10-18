@@ -6,6 +6,7 @@ using System.Data.SqlClient;
 using System.Drawing;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Windows.Forms.DataVisualization.Charting;
@@ -35,10 +36,30 @@ namespace AdoptionAlacrityDashboard
                 }
             }
 
-            yearComboBox.SelectedItem = 1;
-            stateComboBox.SelectedItem = 1;
+            try
+            {
+                SqlCommand sqlCommand = new SqlCommand(DbConnection.YearsQuery, DbConnection.SqlConnection);
+                SqlDataReader reader = sqlCommand.ExecuteReader();
+                while (reader.Read())
+                {
+                    yearComboBox.Items.Add(reader.GetInt32(0));
+                }
+
+                reader.Close();
+            }
+            catch (SqlException exp)
+            {
+                MessageBox.Show("SQL Error, see log file for details.  Closing.");
+                Logger.Log.WriteLog("Error loading State Data.  Closing.");
+                Logger.Log.WriteLog("SqlException: " + exp.Message);
+                Environment.Exit(1);
+            }
+
+            yearComboBox.SelectedIndex = 0;
+            stateComboBox.SelectedIndex = 0;
             errorLabel.ForeColor = Color.Red;
             errorLabel.Text = "";
+
             UpdateStateCharts();
             Logger.Log.WriteLog("Adding Chart Titles");
             Charts.CreateTitle("Gender", genderChart);
@@ -49,7 +70,6 @@ namespace AdoptionAlacrityDashboard
             Charts.CreateTitle("Time Between TPR and Adoption", tprToAdoptChart);
             Charts.CreateTitle("Special Needs", specialNeedsChart);
             Charts.CreateTitle("Adoption Subsidy", adoptionSubsidyChart);
-
             CreateRegressionChart();
             ResizeComponents();
         }
@@ -90,7 +110,8 @@ namespace AdoptionAlacrityDashboard
             }
 
             Logger.Log.WriteLog("Creating Regression Chart");
-            double r = Charts.CreateRegressionChart(ref regressionChart, independentVariable, axisTitle);
+            var years = yearComboBox.Items.Cast<int>().ToArray();
+            double r = Charts.CreateRegressionChart(ref regressionChart, independentVariable, axisTitle, years);
             rLabel.Text = $"Correlation Coefficient r = {Math.Round(r, 3)}";
             string relation = "";
 
@@ -124,13 +145,27 @@ namespace AdoptionAlacrityDashboard
         private void UpdateStateCharts()
         {
             int stateId = stateComboBox.SelectedIndex + 1;
-            int year = year = int.Parse(yearComboBox.Text);
+            int year = int.Parse(yearComboBox.Text);
 
+            // check if there is data first
             // no data for Puerto Rico 2016
-            if (year == 2016 &&
-                stateId == 52)
+            DataTable table = new DataTable();
+            try
             {
-                noDatalabel.Text = "No Data for Puerto Rico in 2016";
+                SqlCommand command = new SqlCommand($"{DbConnection.Observations} WHERE [YEAR]={year} AND StateId={stateId}", DbConnection.SqlConnection);
+                SqlDataAdapter adapter = new SqlDataAdapter(command);
+                adapter.Fill(table);
+            }
+            catch (SqlException exp)
+            {
+                MessageBox.Show("SQL Error, see log file for details.  Closing.");
+                Logger.Log.WriteLog("Error loading State Data.  Closing.");
+                Logger.Log.WriteLog("SqlException: " + exp.Message);
+            }
+
+            if (table.Rows.Count == 0)
+            {
+                noDatalabel.Text = $"No Data for {stateComboBox.Text} in {yearComboBox.Text}";
                 raceChart.Visible = false;
                 genderChart.Visible = false;
                 finalAgeChart.Visible = false;
@@ -143,7 +178,6 @@ namespace AdoptionAlacrityDashboard
             else
             {
                 noDatalabel.Text = "";
-                int targetFontSize = (int)Math.Round(Convert.ToDouble(Width * Height) / 145000.0, 0);
                 Logger.Log.WriteLog($"Creating Charts for {stateComboBox.Text} {yearComboBox.Text}");
 
                 Charts.CreateChartByStateYear(ref raceChart, DbConnection.RaceQuery, SeriesChartType.Column, stateId, year, "Race");
@@ -395,7 +429,7 @@ namespace AdoptionAlacrityDashboard
             Logger.Log.WriteLog($"Loading data from {stateLoadComboBox.Text} for model");
             try
             {
-                SqlCommand command = new SqlCommand($"{DbConnection.Observations2016} AND StateId=@StateId", DbConnection.SqlConnection);
+                SqlCommand command = new SqlCommand($"{DbConnection.Observations} WHERE [YEAR]=2016 AND StateId=@StateId", DbConnection.SqlConnection);
                 command.Parameters.Add("@StateId", SqlDbType.Int);
                 command.Parameters["@StateId"].Value = stateLoadComboBox.SelectedIndex + 1;
                 SqlDataAdapter adapter = new SqlDataAdapter(command);

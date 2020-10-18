@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace AdoptionAlacrityDashboard
+﻿namespace AdoptionAlacrityDashboard
 {
     /// <summary>
     /// Columns returned from the [ObservationsByStateYear] View that can be used as independent variables

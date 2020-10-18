@@ -91,7 +91,7 @@ namespace AdoptionAlacrityDashboard
             chart.Titles.Add(title);
         }
 
-        public static void InitializeRegressionChart(ref Chart regressionChart)
+        public static void InitializeRegressionChart(ref Chart regressionChart, int[] years)
         {
             try
             {
@@ -113,71 +113,20 @@ namespace AdoptionAlacrityDashboard
             regressionChart.Series[0].Name= "Regresion Line";
 
             // add charts for each of the scatter plots
-            regressionChart.Series.Add("2012");
-            regressionChart.Series.Add("2013");
-            regressionChart.Series.Add("2014");
-            regressionChart.Series.Add("2015");
-            regressionChart.Series.Add("2016");
+            foreach (int year in years)
+            {
+                regressionChart.Series.Add(year.ToString());
+            }
         }
 
-        public static double CreateRegressionChart(ref Chart regressionChart, IndependentVariable variable, string axisTitle)
+        public static double CreateRegressionChart(ref Chart regressionChart, IndependentVariable variable, string axisTitle, int[] years)
         {
             if (regressionTable == null)
             {
-                InitializeRegressionChart(ref regressionChart);
+                InitializeRegressionChart(ref regressionChart, years);
             }
 
             string variableName = variable.ToString();
-
-            double[] x2012 = (from p in regressionTable.AsEnumerable()
-                              where Convert.ToInt32(p.Field<object>("Year")) == 2012
-                              orderby p.Field<double>(variableName) ascending
-                              select p.Field<double>(variableName)).ToArray();
-
-            double[] y2012 = (from p in regressionTable.AsEnumerable()
-                              where Convert.ToInt32(p.Field<object>("Year")) == 2012
-                              orderby p.Field<double>(variableName) ascending
-                              select p.Field<double>("AverageMonths")).ToArray();
-
-            double[] x2013 = (from p in regressionTable.AsEnumerable()
-                              where Convert.ToInt32(p.Field<object>("Year")) == 2013
-                              orderby p.Field<double>(variableName) ascending
-                              select p.Field<double>(variableName)).ToArray();
-
-            double[] y2013 = (from p in regressionTable.AsEnumerable()
-                              where Convert.ToInt32(p.Field<object>("Year")) == 2013
-                              orderby p.Field<double>(variableName) ascending
-                              select p.Field<double>("AverageMonths")).ToArray();
-
-            double[] x2014 = (from p in regressionTable.AsEnumerable()
-                              where Convert.ToInt32(p.Field<object>("Year")) == 2014
-                              orderby p.Field<double>(variableName) ascending
-                              select p.Field<double>(variableName)).ToArray();
-
-            double[] y2014 = (from p in regressionTable.AsEnumerable()
-                              where Convert.ToInt32(p.Field<object>("Year")) == 2014
-                              orderby p.Field<double>(variableName) ascending
-                              select p.Field<double>("AverageMonths")).ToArray();
-
-            double[] x2015 = (from p in regressionTable.AsEnumerable()
-                              where Convert.ToInt32(p.Field<object>("Year")) == 2015
-                              orderby p.Field<double>(variableName) ascending
-                              select p.Field<double>(variableName)).ToArray();
-
-            double[] y2015 = (from p in regressionTable.AsEnumerable()
-                              where Convert.ToInt32(p.Field<object>("Year")) == 2015
-                              orderby p.Field<double>(variableName) ascending
-                              select p.Field<double>("AverageMonths")).ToArray();
-
-            double[] x2016 = (from p in regressionTable.AsEnumerable()
-                              where Convert.ToInt32(p.Field<object>("Year")) == 2016
-                              orderby p.Field<double>(variableName) ascending
-                              select p.Field<double>(variableName)).ToArray();
-
-            double[] y2016 = (from p in regressionTable.AsEnumerable()
-                              where Convert.ToInt32(p.Field<object>("Year")) == 2016
-                              orderby p.Field<double>(variableName) ascending
-                              select p.Field<double>("AverageMonths")).ToArray();
 
             var points = (from DataRow p in regressionTable.Rows
                           orderby p.Field<double>(variableName) ascending
@@ -202,30 +151,23 @@ namespace AdoptionAlacrityDashboard
             regressionChart.ChartAreas[0].AxisX.LabelAutoFitMinFontSize = 10;
 
             // scatter plots
-            regressionChart.Series[1].Points.DataBindXY(x2012, y2012);
-            regressionChart.Series[1].ChartType = SeriesChartType.Point;
-            regressionChart.Series[1].MarkerColor = Color.OrangeRed;
-            regressionChart.Series[1].MarkerStyle = MarkerStyle.Square;
+            foreach (int year in years)
+            {
+                double[] plotX = (from p in regressionTable.AsEnumerable()
+                                  where Convert.ToInt32(p.Field<object>("Year")) == year
+                                  orderby p.Field<double>(variableName) ascending
+                                  select p.Field<double>(variableName)).ToArray();
 
-            regressionChart.Series[2].Points.DataBindXY(x2013, y2013);
-            regressionChart.Series[2].ChartType = SeriesChartType.Point;
-            regressionChart.Series[2].MarkerColor = Color.Orange;
-            regressionChart.Series[2].MarkerStyle = MarkerStyle.Square;
+                double[] plotY = (from p in regressionTable.AsEnumerable()
+                                  where Convert.ToInt32(p.Field<object>("Year")) == year
+                                  orderby p.Field<double>(variableName) ascending
+                                  select p.Field<double>("AverageMonths")).ToArray();
 
-            regressionChart.Series[3].Points.DataBindXY(x2014, y2014);
-            regressionChart.Series[3].ChartType = SeriesChartType.Point;
-            regressionChart.Series[3].MarkerColor = Color.Navy;
-            regressionChart.Series[3].MarkerStyle = MarkerStyle.Square;
-
-            regressionChart.Series[4].Points.DataBindXY(x2015, y2015);
-            regressionChart.Series[4].ChartType = SeriesChartType.Point;
-            regressionChart.Series[4].MarkerColor = Color.MediumVioletRed;
-            regressionChart.Series[4].MarkerStyle = MarkerStyle.Square;
-
-            regressionChart.Series[5].Points.DataBindXY(x2016, y2016);
-            regressionChart.Series[5].ChartType = SeriesChartType.Point;
-            regressionChart.Series[5].MarkerColor = Color.ForestGreen;
-            regressionChart.Series[5].MarkerStyle = MarkerStyle.Square;
+                var series = regressionChart.Series.Where(c => c.Name.Equals(year.ToString())).First();
+                series.Points.DataBindXY(plotX, plotY);
+                series.ChartType = SeriesChartType.Point;
+                series.MarkerStyle = MarkerStyle.Square;
+            }
 
             return r;
         }
