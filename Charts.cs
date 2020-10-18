@@ -149,6 +149,7 @@ namespace AdoptionAlacrityDashboard
             regressionChart.ChartAreas[0].AxisY.Title = "TPR to Adoption Avg Months";
             regressionChart.ChartAreas[0].AxisY.TitleFont = new Font("Arial", 12);
             regressionChart.ChartAreas[0].AxisX.LabelAutoFitMinFontSize = 10;
+            regressionChart.ChartAreas[0].BackColor = Color.AliceBlue;
 
             // scatter plots
             foreach (int year in years)
