@@ -125,7 +125,7 @@ namespace AdoptionAlacrityDashboard
                 {
                     relation = "Weak";
                 }
-                if (Math.Abs(r) < 0.7)
+                else if (Math.Abs(r) < 0.7)
                 {
                     relation = "Moderate";
                 }
